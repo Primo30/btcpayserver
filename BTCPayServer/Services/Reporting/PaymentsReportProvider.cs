@@ -3,15 +3,9 @@ using System.Threading;
 using System.Threading.Tasks;
 using BTCPayServer.Client.Models;
 using BTCPayServer.Data;
-using BTCPayServer.Lightning;
 using BTCPayServer.Payments;
-using BTCPayServer.Rating;
-using BTCPayServer.Services.Invoices;
-using BTCPayServer.Services.Rates;
 using Dapper;
 using Microsoft.EntityFrameworkCore;
-using NBitcoin;
-using Newtonsoft.Json.Linq;
 
 namespace BTCPayServer.Services.Reporting;
 
@@ -64,7 +58,7 @@ public class PaymentsReportProvider : ReportProvider
                 },
                 new ()
                 {
-                    Name = "Aggregated currency amount",
+                    Name = "Aggregated amount",
                     Groups = { "Currency" },
                     Totals = { "Currency" },
                     HasGrandTotal = false,
@@ -72,7 +66,7 @@ public class PaymentsReportProvider : ReportProvider
                 },
                 new ()
                 {
-                    Name = "Group by Lightning Address (Currency amount)",
+                    Name = "Group by Lightning Address",
                     Filters = { "typeof this.LightningAddress === 'string' && this.Crypto == \"BTC\"" },
                     Groups = { "LightningAddress", "Currency" },
                     Aggregates = { "CurrencyAmount" },
@@ -80,7 +74,7 @@ public class PaymentsReportProvider : ReportProvider
                 },
                 new ()
                 {
-                    Name = "Group by Lightning Address (Crypto amount)",
+                    Name = "Group by Lightning Address (Crypto)",
                     Filters = { "typeof this.LightningAddress === 'string' && this.Crypto == \"BTC\"" },
                     Groups = { "LightningAddress", "Crypto" },
                     Aggregates = { "CryptoAmount" },
@@ -97,14 +91,14 @@ public class PaymentsReportProvider : ReportProvider
         var conn = ctx.Database.GetDbConnection();
         string[] fields =
         {
-                "i.\"Created\" created",
-                "i.\"Id\" invoice_id",
-                "i.\"OrderId\" order_id",
-                "p.\"Id\" payment_id",
-                "p.\"Type\" payment_type",
-                "i.\"Blob2\" invoice_blob",
-                "p.\"Blob2\" payment_blob",
-            };
+            "i.\"Created\" created",
+            "i.\"Id\" invoice_id",
+            "i.\"OrderId\" order_id",
+            "p.\"Id\" payment_id",
+            "p.\"Type\" payment_type",
+            "i.\"Blob2\" invoice_blob",
+            "p.\"Blob2\" payment_blob",
+        };
         string select = "SELECT " + String.Join(", ", fields) + " ";
         string body =
             "FROM \"Payments\" p " +

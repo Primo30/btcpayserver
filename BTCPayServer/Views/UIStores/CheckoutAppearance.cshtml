@@ -63,7 +63,7 @@
         <form method="post" enctype="multipart/form-data">
             @if (!ViewContext.ModelState.IsValid)
             {
-                <div asp-validation-summary="All" class="text-danger"></div>
+                <div asp-validation-summary="All"></div>
             }
             <h3 class="mb-3">Invoice Settings</h3>
             @if (Model.PaymentMethods.Any())
@@ -237,6 +237,17 @@
                 <label asp-for="HtmlTitle" class="form-label"></label>
                 <input asp-for="HtmlTitle" class="form-control" />
                 <span asp-validation-for="HtmlTitle" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="SupportUrl" class="form-label"></label>
+                <input asp-for="SupportUrl" class="form-control" />
+                <span asp-validation-for="SupportUrl" class="text-danger"></span>
+                <div class="form-text">
+                    For support requests related to partially paid invoices.
+                    A "Contact Us" button with this link will be shown on the invoice expired page.
+                    Can contain the placeholders <code>{OrderId}</code> and <code>{InvoiceId}</code>.
+                    Can be any valid URI, such as a website, email, and Nostr.
+                </div>
             </div>
             <div class="form-check my-3">
                 <input asp-for="LazyPaymentMethods" type="checkbox" class="form-check-input" />

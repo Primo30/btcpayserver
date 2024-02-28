@@ -92,6 +92,26 @@ namespace BTCPayServer.Controllers.Greenfield
                 $"{(request.Locked ? "Locking" : "Unlocking")} user failed");
         }
 
+        [Authorize(Policy = Policies.CanModifyServerSettings, AuthenticationSchemes = AuthenticationSchemes.Greenfield)]
+        [HttpPost("~/api/v1/users/{idOrEmail}/approve")]
+        public async Task<IActionResult> ApproveUser(string idOrEmail, ApproveUserRequest request)
+        {
+            var user = await _userManager.FindByIdOrEmail(idOrEmail);
+            if (user is null)
+            {
+                return this.UserNotFound();
+            }
+
+            var success = false;
+            if (user.RequiresApproval)
+            {
+                success = await _userService.SetUserApproval(user.Id, request.Approved, Request.GetAbsoluteRootUri());
+            }
+
+            return success ? Ok() : this.CreateAPIError("invalid-state",
+                $"{(request.Approved ? "Approving" : "Unapproving")} user failed");
+        }
+
         [Authorize(Policy = Policies.CanViewUsers, AuthenticationSchemes = AuthenticationSchemes.Greenfield)]
         [HttpGet("~/api/v1/users/")]
         public async Task<ActionResult<ApplicationUserData[]>> GetUsers()
@@ -104,14 +124,14 @@ namespace BTCPayServer.Controllers.Greenfield
         public async Task<ActionResult<ApplicationUserData>> GetCurrentUser()
         {
             var user = await _userManager.GetUserAsync(User);
-            return await FromModel(user);
+            return await FromModel(user!);
         }
 
         [Authorize(Policy = Policies.CanDeleteUser, AuthenticationSchemes = AuthenticationSchemes.Greenfield)]
         [HttpDelete("~/api/v1/users/me")]
         public async Task<IActionResult> DeleteCurrentUser()
         {
-            return await DeleteUser(_userManager.GetUserId(User));
+            return await DeleteUser(_userManager.GetUserId(User)!);
         }
 
         [AllowAnonymous]
@@ -163,7 +183,9 @@ namespace BTCPayServer.Controllers.Greenfield
                 UserName = request.Email,
                 Email = request.Email,
                 RequiresEmailConfirmation = policies.RequiresConfirmedEmail,
+                RequiresApproval = policies.RequiresUserApproval,
                 Created = DateTimeOffset.UtcNow,
+                Approved = !anyAdmin && isAdmin // auto-approve first admin
             };
             var passwordValidation = await this._passwordValidator.ValidateAsync(_userManager, user, request.Password);
             if (!passwordValidation.Succeeded)
